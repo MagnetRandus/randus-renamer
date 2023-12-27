@@ -3,8 +3,11 @@
   "version": "0.0.1",
   "description": "shitty filename refresher",
   "main": "main.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "debug-movie": "node dist/main.js --movie --targetDir=d:/renamer/dist/pseudoFiles/movies",
+    "debug-series": "node dist/main.js --series --targetDir=d:/renamer/dist/pseudoFiles/series"
   },
   "repository": {
     "type": "git",
