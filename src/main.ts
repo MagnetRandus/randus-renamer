@@ -12,9 +12,9 @@ import yargs, { Options } from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { LogLevel } from './interfaces/loglevel.js';
 import { DetermineTitle } from './api/determine.js';
-import { mimetypeRefresh } from './api/mimetyperefresh.js';
+import { mimetypes } from './api/mimetyperefresh.js';
 import { IConfig, InitConfig } from './config.js';
-import { existsSync, mkdirSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 
 let didSomething = false;
 interface MyArgs {
@@ -73,19 +73,74 @@ const options: Record<keyof MyArgs, Options> = {
 };
 
 const parser = yargs(hideBin(process.argv)).options(options);
-
 const argv = await parser.argv as unknown as MyArgs;
+const currentDir = dirname(argv.$0!);
+const ini = new InitConfig(currentDir);
 
 if (argv.init) {
-    if (!existsSync(`${dirname(argv.$0!)}${sep}config`)) {
-        mkdirSync(`${dirname(argv.$0!)}${sep}config`, { recursive: true });
-    }
-} else {
-    if (!existsSync(`${dirname(argv.$0!)}${sep}config${sep}config.json`)){
-        console.log(`Please run --init`);
-    }
-}
+    const configDirExists = existsSync(ini.config.configPath);
 
+    if (!configDirExists) {
+        mkdirSync(`${currentDir}${sep}config`, { recursive: true });
+    }
+    
+    ini.iniConfigWrite();
+    ini.OmdbConfigWrite();
+
+    const mimTypesInf = new mimetypes(ini.config.mimedbDataUrl,ini.config.mimeJsonPath);
+    mimTypesInf.MimeDbDataRead();
+
+    console.log(chalk.yellowBright(`Please update config.json and omdb.json`));
+    
+
+} else {
+
+    let hasErrored = false;
+
+    let iniConfig;
+    let omdbConfig;
+    let extensionsMime:Array<string>;
+
+    try {
+        omdbConfig = ini.OmdbConfigRead();
+    } catch (error) {
+        hasErrored = true;
+        if (error instanceof Error)
+            console.log(chalk.yellowBright(error.message))
+    }
+
+    try {
+        iniConfig = ini.iniConfigRead();
+    } catch (error) {
+        
+        hasErrored = true;
+
+        if (error instanceof Error)
+            console.log(chalk.yellowBright(error.message))
+    }
+
+    try {
+        const mimTypesInf = new mimetypes(ini.config.mimedbDataUrl,ini.config.mimeJsonPath);
+        extensionsMime = await mimTypesInf.MimeDbDataRead();
+
+    } catch (error) {
+        
+    }
+
+    
+
+    if (!hasErrored){
+        let mimetypesData;
+        if (argv.mimetypeRefresh){
+            const mdb = new mimetypes(ini.config.mimedbDataUrl, ini.config.mimeJsonPath);
+            mdb.MimeDbDataRead(true);
+        }
+        if (argv.series){
+
+        }
+    }
+
+}
 // let iniData = readFileSync(`${argv.$0!}${sep}config${sep}config.json`, 'utf-8');
 
 // const ini = JSON.parse(await getFile()) as IConfig;

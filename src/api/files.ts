@@ -47,11 +47,9 @@ export function createFile(directoryPath: string, filename: string, payload: str
 
         if (path.isAbsolute(pFile) && !existsSync(directoryPath)) {
             mkdirSync(directoryPath, { recursive: true });
-        } else if (path.isAbsolute(pFile)) {
-            writeFileSync(pFile, payload, 'utf8');
         } else {
-            console.log(chalk.red(`Please provide an absolute path to the file`));
-        }
+            writeFileSync(pFile, payload, 'utf8');
+        } 
 
     } catch (error) {
         console.log(JSON.stringify(error));
