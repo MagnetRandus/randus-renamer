@@ -10,7 +10,7 @@ export interface Search {
     Type: string;
     Poster: string;
 }
-export interface iOmdbApi {
+export interface IOmdbApi {
     key: string;
     url: string;
 }

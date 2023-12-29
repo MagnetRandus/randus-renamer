@@ -1,11 +1,11 @@
 import natural from 'natural';
 import chalk from 'chalk';
-import { iOmdbApi } from '../interfaces/omdb.js';
+import { IOmdbApi } from '../interfaces/omdb.js';
 import { checkOnlineDbMovie } from './omdb.js';
 import { omdbRejected } from '../interfaces/error.js';
 import { dirname } from 'path';
 
-export async function movies(arrFileNames: string[], omdb: iOmdbApi, extensions: Array<string>): Promise<void> {
+export async function movies(arrFileNames: string[], omdb: IOmdbApi, extensions: Array<string>): Promise<void> {
 
     const tokenizer = new natural.WordTokenizer();
     let counter = 0;

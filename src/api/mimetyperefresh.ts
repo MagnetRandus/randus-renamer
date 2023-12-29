@@ -7,13 +7,12 @@ import { sep } from "path";
 
 
 export class mimetypes {
-    private FileExtensions: Array<string>;
-    constructor(private mimedbUrl: string) {
+    public FileExtensions: Array<string>;
+    private mimetypeFileName = `mimetypes.json`;
+    constructor(private confPath: string, private mimedbUrl: string) {
         this.FileExtensions = new Array<string>();
-
-        let mimeJsonFilePath = `${sep}mimedb-extensions.json`
     }
-    private async RefreshFromWeb(): Promise<Array<string>> {
+    private async RefreshFromWeb(): Promise<this> {
 
         const mimeDb = await axios.get<MimeDatabase>(this.mimedbUrl);
 
@@ -26,36 +25,40 @@ export class mimetypes {
                 return acc;
             }, []);
 
-        return new Promise<Array<string>>((resolve, reject) => {
+        return new Promise<this>((resolve, reject) => {
             try {
-                resolve(this.FileExtensions);
+                resolve(this);
             } catch (error) {
                 reject(error);
             }
         });
     }
     private MimeTypesFileExists(): boolean {
-        return existsSync(this.mimeJsonFilePath);
+        return existsSync(`${this.confPath}${sep}${this.mimetypeFileName}`);
     }
-    MimeDbDataRead(force = false): Promise<Array<string>> {
-        return new Promise<Array<string>>(async (resolve, reject) => {
+    MimeDbDataRead(force = false): Promise<this> {
+        return new Promise<this>(async (resolve, reject) => {
             try {
-                if (force){
+                if (force || !this.MimeTypesFileExists()) {
                     
-                }
-                if (this.MimeTypesFileExists()) {
-                    this.FileExtensions = JSON.parse(readFileSync(this.mimeJsonFilePath, 'utf-8'));
-                    resolve(this.FileExtensions);
+                    await this.RefreshFromWeb();
+
+                    createFile(`${this.confPath}`, this.mimetypeFileName, JSON.stringify(this.FileExtensions, null, 2));
+                    
+                    console.log(chalk.yellowBright(`MimeTypes refreshed from web.  If you used` + chalk.blueBright(`--mimetypeRefresh`) + chalk.yellowBright(`, remember to remove it from the parameters on the next run.`)));
+                    
+                    resolve(this);
 
                 } else {
-                    resolve(await this.RefreshFromWeb());
+                    
+                    this.FileExtensions = JSON.parse(readFileSync(`${this.confPath}${sep}${this.mimetypeFileName}`, 'utf-8'));
+                    
+                    resolve(this);
                 }
             } catch (error) {
                 reject(error);
             }
         });
-    }
-    iniConfigWrite(): void {
-        createFile(this.mimeJsonFilePath, `config.json`, JSON.stringify(this.config, null, 2));
+
     }
 }

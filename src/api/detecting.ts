@@ -1,6 +1,6 @@
 import natural from 'natural';
 import chalk from 'chalk';
-import { iOmdbApi } from '../interfaces/omdb.js';
+import { IOmdbApi } from '../interfaces/omdb.js';
 import { checkOnlineDbEpisode, checkOnlineDbMovie, checkOnlineDbSeries } from './omdb.js';
 import { omdbRejected } from '../interfaces/error.js';
 import { basename, dirname } from 'path';
@@ -23,7 +23,7 @@ export type isSM = 'series' | 'movies' | '';
 
 // }
 
-export async function isM(fullpath: string, omdb: iOmdbApi, extensions: Array<string>): Promise<isSM | undefined> {
+export async function isM(fullpath: string, omdb: IOmdbApi, extensions: Array<string>): Promise<isSM | undefined> {
 
     const tokenizer = new natural.WordTokenizer();
     let counter = 0;
@@ -187,7 +187,7 @@ function isMedia(fname: string, extensions: Array<string>): string {
     throw new TypeError(`[${loglevel}:] Probably not a video file! %FULLPATH% `);
 }
 
-export async function Detective(fullpath: string, omdb: iOmdbApi, extensions: Array<string>, LogLevel: LogLevel) {
+export async function Detective(fullpath: string, omdb: IOmdbApi, extensions: Array<string>, LogLevel: LogLevel) {
     const filename = PreSweepName(basename(fullpath));
     const pathInfo = dirname(fullpath);
 

@@ -1,7 +1,7 @@
 import os from 'os';
 import natural from 'natural';
 import chalk from 'chalk';
-import { Episode, Search, iOmdbApi } from '../interfaces/omdb.js';
+import { Episode, Search, IOmdbApi } from '../interfaces/omdb.js';
 import { checkOnlineDbEpisode, checkOnlineDbSeries } from './omdb.js';
 import { omdbRejected } from '../interfaces/error.js';
 import path, { dirname } from 'path';
@@ -28,7 +28,7 @@ async function ask(titles: Array<string>, fileName: string): Promise<nameSelecte
     return inquirer.prompt(b);
 }
 
-async function resolveSeriesName(omdb: iOmdbApi, firstWord: string, fileName: string): Promise<Search> {
+async function resolveSeriesName(omdb: IOmdbApi, firstWord: string, fileName: string): Promise<Search> {
     const { config, data, headers, status, statusText, request } = await checkOnlineDbSeries(firstWord, omdb.key, omdb.url);
     const { Search } = data;
 
@@ -42,7 +42,7 @@ async function resolveSeriesName(omdb: iOmdbApi, firstWord: string, fileName: st
 
     return omdInf[0];
 }
-async function resolveEpisodeName(omdb: iOmdbApi, seriesName: string, seasonNr: number, episodeNr: number): Promise<Episode> {
+async function resolveEpisodeName(omdb: IOmdbApi, seriesName: string, seasonNr: number, episodeNr: number): Promise<Episode> {
     return new Promise<Episode>(async (resolve, reject) => {
         try {
             const { config, data, headers, status, statusText, request } = await checkOnlineDbEpisode(seriesName, seasonNr, episodeNr, omdb.key, omdb.url);
@@ -52,7 +52,7 @@ async function resolveEpisodeName(omdb: iOmdbApi, seriesName: string, seasonNr: 
         }
     });
 }
-export async function series(arrFileNames: string[], omdb: iOmdbApi, extensions: Array<string>): Promise<void> {
+export async function series(arrFileNames: string[], omdb: IOmdbApi, extensions: Array<string>): Promise<void> {
 
     const tokenizer = new natural.WordTokenizer();
 

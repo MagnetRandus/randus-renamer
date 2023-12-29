@@ -1,20 +1,14 @@
-// import * as readline from 'node:readline/promises';
-// import { stdin as input, stdout as output } from 'process';
-import { EOL } from 'os';
-import { sep, dirname } from 'path';
-
+import { dirname } from 'path';
 import chalk from 'chalk';
-import type { iOmdbApi } from './interfaces/omdb.js';
-import { movies } from './api/movies.js';
-import { traverseDirectory } from './api/files.js';
-
 import yargs, { Options } from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { LogLevel } from './interfaces/loglevel.js';
-import { DetermineTitle } from './api/determine.js';
 import { mimetypes } from './api/mimetyperefresh.js';
-import { IConfig, InitConfig } from './config.js';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { InitConfig } from './config.js';
+import { argv_init } from './api/argv_init.js';
+import { argv_readdir } from './api/argv_readdir.js';
+
+const omdbDefaultConf = { key: "TYPE_KEY_HERE", url: "http://www.omdbapi.com/" };
 
 let didSomething = false;
 interface MyArgs {
@@ -75,71 +69,62 @@ const options: Record<keyof MyArgs, Options> = {
 const parser = yargs(hideBin(process.argv)).options(options);
 const argv = await parser.argv as unknown as MyArgs;
 const currentDir = dirname(argv.$0!);
-const ini = new InitConfig(currentDir);
+const ini = new InitConfig(currentDir, omdbDefaultConf);
 
 if (argv.init) {
-    const configDirExists = existsSync(ini.config.configPath);
-
-    if (!configDirExists) {
-        mkdirSync(`${currentDir}${sep}config`, { recursive: true });
-    }
     
-    ini.iniConfigWrite();
-    ini.OmdbConfigWrite();
+    argv_init(currentDir, ini);
 
-    const mimTypesInf = new mimetypes(ini.config.mimedbDataUrl,ini.config.mimeJsonPath);
-    mimTypesInf.MimeDbDataRead();
-
-    console.log(chalk.yellowBright(`Please update config.json and omdb.json`));
+} else if(argv.readDir){
     
+    argv_readdir(argv.targetDir);
 
 } else {
 
     let hasErrored = false;
-
-    let iniConfig;
-    let omdbConfig;
+    
     let extensionsMime:Array<string>;
 
     try {
-        omdbConfig = ini.OmdbConfigRead();
+        ini.OmdbConfigRead();
     } catch (error) {
         hasErrored = true;
         if (error instanceof Error)
-            console.log(chalk.yellowBright(error.message))
+            console.log(chalk.yellowBright(error.message));
     }
 
     try {
-        iniConfig = ini.iniConfigRead();
+        ini.iniConfigRead();
     } catch (error) {
-        
         hasErrored = true;
-
         if (error instanceof Error)
-            console.log(chalk.yellowBright(error.message))
+            console.log(chalk.yellowBright(error.message));
     }
 
     try {
-        const mimTypesInf = new mimetypes(ini.config.mimedbDataUrl,ini.config.mimeJsonPath);
-        extensionsMime = await mimTypesInf.MimeDbDataRead();
+        const mimTypesInf = new mimetypes(ini.config.configPath,ini.config.mimedbDataUrl);
+        extensionsMime = (await mimTypesInf.MimeDbDataRead()).FileExtensions;
 
     } catch (error) {
-        
+        hasErrored = true;
+        if (error instanceof Error)
+            console.log(chalk.yellowBright(error.message));
     }
-
-    
 
     if (!hasErrored){
-        let mimetypesData;
-        if (argv.mimetypeRefresh){
-            const mdb = new mimetypes(ini.config.mimedbDataUrl, ini.config.mimeJsonPath);
-            mdb.MimeDbDataRead(true);
-        }
-        if (argv.series){
 
+        const mdb = new mimetypes(ini.config.configPath,ini.config.mimedbDataUrl);
+
+        if (argv.mimetypeRefresh){
+            await mdb.MimeDbDataRead(true);
+        }
+
+        if (argv.series){
+                console.log('DOING SERIES');
+        } else if(argv.movie){
+            console.log('DOING MOVIES');
         }
     }
-
 }
 // let iniData = readFileSync(`${argv.$0!}${sep}config${sep}config.json`, 'utf-8');
 
@@ -209,57 +194,7 @@ if (argv.init) {
 //             }
 //         }
 
-//         /**
-//          * MAIN
-//          */
-//         const filelistPath = `D:\\renamer\\filelists\\filelist.txt`;
-//         const tDir = argv.targetDir;
-//         // const fInf = fs.readFileSync(configFilelist, 'utf-8');
-//         const fileListTemplatePath = fs.readFileSync(filelistPath, 'utf-8');
-//         const fileListContent = fileListTemplatePath.split(EOL);
-
-//         if (fs.statSync(filelistPath).isFile()) {
-
-//             try {
-//                 DetermineTitle(fileListContent, extensions);
-//             } catch (err) {
-//                 console.log(chalk.red(`The title got messed up!`));
-//                 console.error(err);
-//             }
-
-//             try {
-
-//                 // const tpath = `${path.dirname(import.meta.url)}/pseudoFiles/${argv.testFilesCreate}`.replace('file:///', '');
-
-
-//                 const iterateContent = fileListContent.values();
-//                 let next = iterateContent.next();
-
-
-//                 while (!next.done) {
-//                     // await Detective(next.value, omdbConfig, extensions, argv.logLevel);
-//                     next = iterateContent.next();
-//                 }
-
-//             } catch (err) {
-//                 console.log(chalk.red(`Something weird, really?!?`));
-//                 console.error(err);
-//             }
-
-//             didSomething = true;
-
-
-//         } else {
-//             console.log(`Please provide parameter --testFileSourcePath`)
-//         }
-
-//         if (typeof argv.targetDir !== 'undefined') {
-//             didSomething = true;
-//         }
-
-//         if (!didSomething) console.log(chalk.yellow(`Try node dist/main.js --help`));
-
-//     }
+//         
 
 //     if (argv.movie) {
 //         const omdbConfig = JSON.parse(fs.readFileSync(configOmdb, 'utf8')) as iOmdbApi;
